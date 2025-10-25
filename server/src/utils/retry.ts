@@ -1,0 +1,67 @@
+import { RetryConfig } from '../types/ai.types';
+
+export class RetryError extends Error {
+  constructor(
+    message: string,
+    public attempts: number,
+    public lastError: Error
+  ) {
+    super(message);
+    this.name = 'RetryError';
+  }
+}
+
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  config: RetryConfig,
+  context: string = 'operation'
+): Promise<T> {
+  let lastError: Error | null = null;
+  let delay = config.initialDelay;
+
+  for (let attempt = 1; attempt <= config.maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+
+      console.warn(
+        `${context} failed (attempt ${attempt}/${config.maxRetries}):`,
+        error instanceof Error ? error.message : error
+      );
+
+      // Don't retry on certain errors
+      if (isNonRetryableError(error)) {
+        throw error;
+      }
+
+      if (attempt < config.maxRetries) {
+        console.log(`Retrying ${context} in ${delay}ms...`);
+        await sleep(delay);
+        delay = Math.min(delay * config.backoffMultiplier, config.maxDelay);
+      }
+    }
+  }
+
+  throw new RetryError(
+    `${context} failed after ${config.maxRetries} attempts`,
+    config.maxRetries,
+    lastError!
+  );
+}
+
+function isNonRetryableError(error: any): boolean {
+  const nonRetryableMessages = [
+    'invalid api key',
+    'authentication failed',
+    'not found',
+    'bad request',
+  ];
+
+  const errorMessage = error?.message?.toLowerCase() || '';
+  return nonRetryableMessages.some((msg) => errorMessage.includes(msg));
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

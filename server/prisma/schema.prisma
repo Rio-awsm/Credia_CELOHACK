@@ -1,0 +1,137 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  requester
+  worker
+}
+
+enum TaskType {
+  text_verification
+  image_labeling
+  survey
+  content_moderation
+}
+
+enum TaskStatus {
+  open
+  in_progress
+  completed
+  expired
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+}
+
+// Models
+model Task {
+  id                   String     @id @default(uuid())
+  requesterId          String     @map("requester_id")
+  title                String     @db.VarChar(100)
+  description          String     @db.Text
+  taskType             TaskType   @map("task_type")
+  paymentAmount        Decimal    @db.Decimal(10, 2) @map("payment_amount")
+  status               TaskStatus @default(open)
+  verificationCriteria Json       @map("verification_criteria")
+  maxSubmissions       Int        @map("max_submissions")
+  contractTaskId       Int?       @map("contract_task_id")  // ← ADD THIS LINE
+  expiresAt            DateTime   @map("expires_at")
+  createdAt            DateTime   @default(now()) @map("created_at")
+  updatedAt            DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  requester            User         @relation("TaskRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  submissions          Submission[]
+  payments             Payment[]
+
+  @@index([requesterId])
+  @@index([status])
+  @@index([taskType])
+  @@index([expiresAt])
+  @@index([contractTaskId])  // ← ADD THIS LINE
+  @@map("tasks")
+}
+
+model User {
+  id                    String   @id @default(uuid())
+  walletAddress         String   @unique @map("wallet_address")
+  phoneNumber           String?  @map("phone_number")
+  role                  UserRole
+  reputationScore       Int      @default(0) @map("reputation_score")
+  totalEarnings         Decimal  @default(0) @db.Decimal(10, 2) @map("total_earnings")
+  totalTasksCreated     Int      @default(0) @map("total_tasks_created")     // ← ADD THIS LINE
+  totalTasksCompleted   Int      @default(0) @map("total_tasks_completed")   // ← ADD THIS LINE
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  createdTasks          Task[]       @relation("TaskRequester")
+  submissions           Submission[]
+  payments              Payment[]
+
+  @@index([walletAddress])
+  @@index([role])
+  @@map("users")
+}
+
+
+model Submission {
+  id                    String             @id @default(uuid())
+  taskId                String             @map("task_id")
+  workerId              String             @map("worker_id")
+  submissionData        Json               @map("submission_data")
+  aiVerificationResult  Json?              @map("ai_verification_result")
+  verificationStatus    VerificationStatus @default(pending) @map("verification_status")
+  paymentTransactionHash String?           @map("payment_transaction_hash")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  task                  Task               @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  worker                User               @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, workerId]) // One submission per worker per task
+  @@index([taskId])
+  @@index([workerId])
+  @@index([verificationStatus])
+  @@map("submissions")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  taskId          String        @map("task_id")
+  workerId        String        @map("worker_id")
+  amount          Decimal       @db.Decimal(10, 2)
+  transactionHash String        @map("transaction_hash")
+  status          PaymentStatus @default(pending)
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  task            Task          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  worker          User          @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([workerId])
+  @@index([transactionHash])
+  @@index([status])
+  @@map("payments")
+}

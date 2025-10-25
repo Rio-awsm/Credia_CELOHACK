@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",  // Change from ESNext/ES2020
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "target": "ES2020"
+  }
+}
