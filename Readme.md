@@ -12,7 +12,7 @@ An **AI-powered decentralized task marketplace** built on **Celo Sepolia Testnet
 - **🌐 Live Demo:** [https://micro-job-ai-agent-web3.vercel.app/](https://micro-job-ai-agent-web3.vercel.app/)
 - **📂 GitHub Repository:** [Rio-awsm/micro-job-ai-agent-web3](https://github.com/Rio-awsm/micro-job-ai-agent-web3)
 - **🎥 Demo Video:** [https://youtu.be/PC2ccqsz74M](https://youtu.be/PC2ccqsz74M)
-- **📊 Presentation:** [https://drive.google.com/file/d/18V1VG_NMWrNqNsutYqYxM6apTbu-LUeE/view?usp=sharing](https://drive.google.com/file/d/18V1VG_NMWrNqNsutYqYxM6apTbu-LUeE/view?usp=sharing) `<!-- Add your PPT link -->`
+- **📊 Presentation:** [https://drive.google.com/file/d/18V1VG_NMWrNqNsutYqYxM6apTbu-LUeE/view?usp=sharing](https://drive.google.com/file/d/18V1VG_NMWrNqNsutYqYxM6apTbu-LUeE/view?usp=sharing)
 
 ---
 
@@ -230,6 +230,14 @@ npx hardhat verify --network celo-sepolia 0xYourContractAddress "0x874069fa1eb16
 ```
 
 ---
+
+## 🧠 Wireframe
+
+<img src="assets/wireframe.png" alt="Credio Wireframe" width="800" />
+
+## 💰 Tasks
+
+<img src="assets/tasks.png" alt="Credio Wireframe" width="800" />
 
 ## 🧠 Workflow
 
