@@ -1,3 +1,4 @@
+import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/providers/AuthProvider";
@@ -31,6 +32,7 @@ export default function RootLayout({
             >
               <Navbar />
               <main>{children}</main>
+              <Footer />
             </ThemeProvider>
           </AuthProvider>
         </QueryProvider>
