@@ -2,9 +2,9 @@ import { Response } from "express";
 import { prisma } from "../database/connections";
 import { blockchainService } from "../services/blockchain.service";
 import {
-    AuthenticatedRequest,
-    CreateTaskDto,
-    TaskListQuery,
+  AuthenticatedRequest,
+  CreateTaskDto,
+  TaskListQuery,
 } from "../types/api.types";
 import { TaskStatus } from "../types/database.types";
 import { ResponseUtil } from "../utils/response.util";
@@ -51,7 +51,7 @@ export class TaskController {
         durationInDays
       );
 
-    
+
 
       // Step 4: Store task metadata in database
       console.log("💾 Storing task in database...");
@@ -291,6 +291,123 @@ export class TaskController {
     } catch (error) {
       console.error("Get my tasks error:", error);
       ResponseUtil.internalError(res, "Failed to fetch tasks");
+    }
+  }
+
+  /**
+   * POST /api/tasks/sync
+   * Sync task from blockchain admin dashboard to database
+   */
+  static async syncTask(
+    req: any,
+    res: Response
+  ): Promise<void> {
+    try {
+      const {
+        contractTaskId,
+        transactionHash,
+        paymentAmount,
+        taskName,
+        taskType,
+        description,
+        maxSubmissions,
+        durationInDays,
+        verificationCriteria,
+      } = req.body;
+
+      if (!contractTaskId || !transactionHash) {
+        ResponseUtil.error(
+          res,
+          "contractTaskId and transactionHash are required",
+          "MISSING_REQUIRED_FIELDS",
+          400
+        );
+        return;
+      }
+
+      console.log(
+        `\n🔄 Syncing blockchain task ${contractTaskId} to database`
+      );
+
+      // Check if task already exists
+      const existingTask = await prisma.task.findFirst({
+        where: { contractTaskId: parseInt(contractTaskId) },
+      });
+
+      if (existingTask) {
+        console.log(`✅ Task ${contractTaskId} already exists in database`);
+        ResponseUtil.success(res, {
+          message: "Task already synced",
+          task: existingTask,
+        });
+        return;
+      }
+
+      // Find or create the system requester for blockchain-created tasks
+      let adminUser = await prisma.user.findFirst({
+        where: { walletAddress: "0xadmin_blockchain" },
+      });
+
+      if (!adminUser) {
+        adminUser = await prisma.user.create({
+          data: {
+            walletAddress: "0xadmin_blockchain",
+            role: "requester",
+            reputationScore: 100,
+          },
+        });
+      }
+
+      // Calculate expiration date from durationInDays
+      const expiresAt = new Date(
+        Date.now() + (durationInDays || 30) * 24 * 60 * 60 * 1000
+      );
+
+      // Create task in database with blockchain metadata
+      const task = await prisma.task.create({
+        data: {
+          requesterId: adminUser.id,
+          title: taskName || "Blockchain Task",
+          description: description || "Created via blockchain admin dashboard",
+          taskType: (taskType as any) || "text_verification",
+          paymentAmount: parseFloat(paymentAmount) || 0,
+          verificationCriteria: verificationCriteria || {
+            transactionHash: transactionHash,
+            blockchainCreated: true,
+          },
+          maxSubmissions: maxSubmissions || 10,
+          contractTaskId: parseInt(contractTaskId),
+          expiresAt: expiresAt,
+          status: TaskStatus.OPEN,
+        },
+        include: {
+          requester: {
+            select: {
+              id: true,
+              walletAddress: true,
+              reputationScore: true,
+            },
+          },
+        },
+      });
+
+      console.log(`✅ Task synced successfully! DB ID: ${task.id}`);
+
+      ResponseUtil.success(
+        res,
+        {
+          message: "Task synced to database",
+          task,
+          blockchain: {
+            contractTaskId: parseInt(contractTaskId),
+            transactionHash,
+          },
+        },
+        201
+      );
+    } catch (error) {
+      console.error("Sync task error:", error);
+      ResponseUtil.internalError(res, "Failed to sync task from blockchain");
     }
   }
 }
