@@ -215,6 +215,7 @@ Visit → [http://localhost:3000](http://localhost:3000)
 
 ## 💰 Smart Contract Deployment
 
+### Our Deployed Smart Contract- [0xa520d207c91C0FE0e9cFe8D63AbE02fd18B2254e](https://sepolia.celoscan.io/address/0xa520d207c91c0fe0e9cfe8d63abe02fd18b2254e)
 Deploy `TaskEscrow.sol` on **Celo Sepolia** using Remix or Hardhat.
 
 ### Compile & Deploy
