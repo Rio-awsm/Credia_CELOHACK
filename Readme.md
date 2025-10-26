@@ -1,5 +1,7 @@
 # 🪙 Credio — AI-Verified Micro-Task Marketplace on Celo
 
+<img src="assets/landing.png" alt="Credio Landing Page" width="800" />
+
 An **AI-powered decentralized task marketplace** built on **Celo Sepolia Testnet**, where requesters post micro-tasks, workers complete them, AI verifies the results, and **payments are automatically released in cUSD** upon approval.
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=flat&logo=vercel)](https://micro-job-ai-agent-web3.vercel.app/)
@@ -9,8 +11,8 @@ An **AI-powered decentralized task marketplace** built on **Celo Sepolia Testnet
 
 - **🌐 Live Demo:** [https://micro-job-ai-agent-web3.vercel.app/](https://micro-job-ai-agent-web3.vercel.app/)
 - **📂 GitHub Repository:** [Rio-awsm/micro-job-ai-agent-web3](https://github.com/Rio-awsm/micro-job-ai-agent-web3)
-- **🎥 Demo Video:** [Watch Demo](#) <!-- Add your video link -->
-- **📊 Presentation:** [View Slides](#) <!-- Add your PPT link -->
+- **🎥 Demo Video:** [https://youtu.be/PC2ccqsz74M](https://youtu.be/PC2ccqsz74M)
+- **📊 Presentation:** [https://drive.google.com/file/d/18V1VG_NMWrNqNsutYqYxM6apTbu-LUeE/view?usp=sharing](https://drive.google.com/file/d/18V1VG_NMWrNqNsutYqYxM6apTbu-LUeE/view?usp=sharing) `<!-- Add your PPT link -->`
 
 ---
 
@@ -53,29 +55,29 @@ An **AI-powered decentralized task marketplace** built on **Celo Sepolia Testnet
 
 ### 🖥️ Frontend — Next.js (App Router)
 
-| Feature | Library/Framework |
-|---------|-------------------|
-| UI Components | [shadcn/ui](https://ui.shadcn.com) |
-| Styling | [TailwindCSS](https://tailwindcss.com) |
-| State Management | [Zustand](https://zustand-demo.pmnd.rs) |
-| Data Fetching | [TanStack Query](https://tanstack.com/query/v5) |
-| Wallet Integration | [wagmi](https://wagmi.sh) + [viem](https://viem.sh) |
-| Blockchain SDK | [@celo/contractkit](https://docs.celo.org/) |
-| Wallets Supported | **MiniPay** and **MetaMask** |
-| AI Moderation | [Google Gemini 1.5](https://ai.google.dev/gemini-api/) |
+| Feature            | Library/Framework                                   |
+| ------------------ | --------------------------------------------------- |
+| UI Components      | [shadcn/ui](https://ui.shadcn.com)                     |
+| Styling            | [TailwindCSS](https://tailwindcss.com)                 |
+| State Management   | [Zustand](https://zustand-demo.pmnd.rs)                |
+| Data Fetching      | [TanStack Query](https://tanstack.com/query/v5)        |
+| Wallet Integration | [wagmi](https://wagmi.sh) + [viem](https://viem.sh)       |
+| Blockchain SDK     | [@celo/contractkit](https://docs.celo.org/)            |
+| Wallets Supported  | **MiniPay** and **MetaMask**            |
+| AI Moderation      | [Google Gemini 1.5](https://ai.google.dev/gemini-api/) |
 
 ### ⚙️ Backend — Express.js + TypeScript
 
-| Feature | Technology |
-|---------|------------|
-| Framework | Express.js |
-| Database | PostgreSQL + Prisma ORM |
-| Job Queue | Bull + Redis |
-| AI Verification | Gemini API |
-| Blockchain | Celo Sepolia |
-| Authentication | Wallet Signature (EIP-191) |
-| File Verification | cUSD Escrow via TaskEscrow.sol |
-| Notifications | Background service + WebSocket placeholder |
+| Feature           | Technology                                 |
+| ----------------- | ------------------------------------------ |
+| Framework         | Express.js                                 |
+| Database          | PostgreSQL + Prisma ORM                    |
+| Job Queue         | Bull + Redis                               |
+| AI Verification   | Gemini API                                 |
+| Blockchain        | Celo Sepolia                               |
+| Authentication    | Wallet Signature (EIP-191)                 |
+| File Verification | cUSD Escrow via TaskEscrow.sol             |
+| Notifications     | Background service + WebSocket placeholder |
 
 ### ⛓️ Blockchain — Celo Sepolia Testnet
 
@@ -103,13 +105,13 @@ Gemini runs asynchronously in a **Bull Queue worker**, sending results via webho
 
 ## 🗄️ Database Schema (Core Entities)
 
-| Table | Description |
-|-------|-------------|
-| **users** | Stores wallet addresses, roles (`requester` / `worker`), reputation & earnings |
-| **tasks** | Contains task metadata, blockchain taskID, payment amount, expiry |
-| **submissions** | Tracks worker submissions, AI verification results |
-| **payments** | Logs payment releases (+txHash) |
-| **notifications** | In-app notifications for verification or payment updates |
+| Table                   | Description                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------- |
+| **users**         | Stores wallet addresses, roles (`requester` / `worker`), reputation & earnings |
+| **tasks**         | Contains task metadata, blockchain taskID, payment amount, expiry                  |
+| **submissions**   | Tracks worker submissions, AI verification results                                 |
+| **payments**      | Logs payment releases (+txHash)                                                    |
+| **notifications** | In-app notifications for verification or payment updates                           |
 
 ---
 
@@ -303,16 +305,16 @@ AI      /Bull    Network
 
 ## ✅ Features Checklist
 
-- [x] Wallet Signature Login (EIP-191)
-- [x] Gemini-based Content Moderation
-- [x] Blockchain-Backed Escrow Payments
-- [x] Task + Submission CRUD
-- [x] Bull Queue Worker Verification
-- [x] Real-Time Status Updates
-- [x] cUSD Balance Tracking
-- [x] Transaction Confirmation + CeloScan Link
-- [x] Admin + Requester Dashboard
-- [x] Fully Responsive UI
+- [X] Wallet Signature Login (EIP-191)
+- [X] Gemini-based Content Moderation
+- [X] Blockchain-Backed Escrow Payments
+- [X] Task + Submission CRUD
+- [X] Bull Queue Worker Verification
+- [X] Real-Time Status Updates
+- [X] cUSD Balance Tracking
+- [X] Transaction Confirmation + CeloScan Link
+- [X] Admin + Requester Dashboard
+- [X] Fully Responsive UI
 
 ---
 
@@ -336,12 +338,12 @@ npm run bull:dashboard
 
 ### Suggested Setup
 
-| Layer | Platform | Notes |
-|-------|----------|-------|
-| Frontend | [Vercel](https://vercel.com) | Auto-deploy from main |
-| Backend | [Railway](https://railway.app) / [Render](https://render.com) | Node + Postgres service |
-| Database | Neon / Supabase | Free Postgres DB |
-| Redis | Upstash / Redis Cloud | Connection for Bull jobs |
+| Layer    | Platform                                                | Notes                    |
+| -------- | ------------------------------------------------------- | ------------------------ |
+| Frontend | [Vercel](https://vercel.com)                               | Auto-deploy from main    |
+| Backend  | [Railway](https://railway.app) / [Render](https://render.com) | Node + Postgres service  |
+| Database | Neon / Supabase                                         | Free Postgres DB         |
+| Redis    | Upstash / Redis Cloud                                   | Connection for Bull jobs |
 
 ---
 
