@@ -14,9 +14,17 @@ export default function SubmitTaskPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { isConnected } = useWallet();
-  
+
   const taskId = params.taskId as string;
-  const [formData, setFormData] = useState({ text: '', imageFile: null as File | null });
+  const [formData, setFormData] = useState({
+    text: '',
+    imageFile: null as File | null,
+    labels: '',
+    answers: [] as string[],
+    comment: '',
+    decision: '',
+    customFields: {} as Record<string, any>
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -30,7 +38,7 @@ export default function SubmitTaskPage() {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['submissions'] });
-      
+
       const submissionId = response.data.submissionId;
       router.push(`/submissions/${submissionId}`);
     },
@@ -40,6 +48,25 @@ export default function SubmitTaskPage() {
   });
 
   const task = taskData?.data;
+  const requiredFields: string[] = task?.verificationCriteria?.requiredFields || [];
+
+  // Helper function to check if a field is required
+  const isFieldRequired = (fieldName: string) => requiredFields.includes(fieldName);
+
+  // Helper function to render survey questions
+  const getSurveyQuestions = () => {
+    // This could come from the task description or verification criteria
+    // For now, we'll use some default questions based on task type
+    if (task?.taskType === TaskType.SURVEY) {
+      return [
+        'How would you rate the overall user experience? (1-5)',
+        'What features did you find most useful?',
+        'What improvements would you suggest?'
+      ];
+    }
+    // You could also get questions from task.verificationCriteria.questions if available
+    return task?.verificationCriteria?.questions || [];
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -77,34 +104,76 @@ export default function SubmitTaskPage() {
       return;
     }
 
-    // Validation
+    // Dynamic validation based on verification criteria
     const newErrors: Record<string, string> = {};
 
-    if (task?.taskType === TaskType.TEXT_VERIFICATION && !formData.text.trim()) {
-      newErrors.text = 'Text is required';
-    }
-
-    if (task?.taskType === TaskType.IMAGE_LABELING && !formData.imageFile) {
-      newErrors.image = 'Image is required';
-    }
+    requiredFields.forEach((field: string) => {
+      switch (field) {
+        case 'text':
+          if (!formData.text.trim()) {
+            newErrors.text = 'Text is required';
+          }
+          break;
+        case 'image':
+          if (!formData.imageFile) {
+            newErrors.image = 'Image is required';
+          }
+          break;
+        case 'labels':
+          if (!formData.labels.trim()) {
+            newErrors.labels = 'Labels are required';
+          }
+          break;
+        case 'answers':
+          if (!formData.answers || formData.answers.length === 0 || formData.answers.some(answer => !answer?.trim())) {
+            newErrors.answers = 'All survey questions must be answered';
+          }
+          break;
+        case 'comment':
+          if (!formData.comment.trim()) {
+            newErrors.comment = 'Comment is required';
+          }
+          break;
+        case 'decision':
+          if (!formData.decision) {
+            newErrors.decision = 'Decision is required';
+          }
+          break;
+      }
+    });
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    // Prepare submission data
+    // Prepare submission data dynamically
     const submissionData: any = {};
 
-    if (task?.taskType === TaskType.TEXT_VERIFICATION) {
-      submissionData.text = formData.text;
-    }
-
-    if (task?.taskType === TaskType.IMAGE_LABELING) {
-      // In production, upload to cloud storage (S3, Cloudinary, etc.)
-      submissionData.imageUrls = ['https://placeholder.com/image.jpg'];
-      submissionData.metadata = { fileName: formData.imageFile?.name };
-    }
+    requiredFields.forEach((field: string) => {
+      switch (field) {
+        case 'text':
+          submissionData.text = formData.text;
+          break;
+        case 'image':
+          // In production, upload to cloud storage (S3, Cloudinary, etc.)
+          submissionData.imageUrls = ['https://placeholder.com/image.jpg'];
+          submissionData.metadata = { fileName: formData.imageFile?.name };
+          break;
+        case 'labels':
+          submissionData.labels = formData.labels.split(',').map(label => label.trim());
+          break;
+        case 'answers':
+          submissionData.answers = formData.answers;
+          break;
+        case 'comment':
+          submissionData.comment = formData.comment;
+          break;
+        case 'decision':
+          submissionData.decision = formData.decision;
+          break;
+      }
+    });
 
     // Submit
     await submitMutation.mutateAsync({
@@ -226,8 +295,8 @@ export default function SubmitTaskPage() {
             <h3 className="text-2xl font-bold text-foreground">Submit Your Work</h3>
           </div>
 
-          {/* Text Verification */}
-          {task.taskType === TaskType.TEXT_VERIFICATION && (
+          {/* Text Field - Dynamic based on required fields */}
+          {isFieldRequired('text') && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -235,17 +304,21 @@ export default function SubmitTaskPage() {
               className="mb-6"
             >
               <label className="block text-sm font-semibold text-foreground mb-3">
-                Your Response *
+                {task.taskType === TaskType.TEXT_VERIFICATION ? 'Your Response' :
+                  task.taskType === TaskType.CONTENT_MODERATION ? 'Comment to Review' : 'Text'} *
               </label>
               <div className="relative">
                 <textarea
                   value={formData.text}
                   onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-                  rows={8}
-                  placeholder="Enter your response here..."
-                  className={`w-full px-4 py-3 bg-background/50 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${
-                    errors.text ? 'border-red-500' : 'border-orange-500/30'
-                  } text-foreground placeholder:text-foreground/40`}
+                  rows={task.taskType === TaskType.TEXT_VERIFICATION ? 8 : 4}
+                  placeholder={
+                    task.taskType === TaskType.TEXT_VERIFICATION ? "Enter your response here..." :
+                      task.taskType === TaskType.CONTENT_MODERATION ? "Paste the comment to review here..." :
+                        "Enter your text here..."
+                  }
+                  className={`w-full px-4 py-3 bg-background/50 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.text ? 'border-red-500' : 'border-orange-500/30'
+                    } text-foreground placeholder:text-foreground/40`}
                 />
                 {errors.text && (
                   <motion.p
@@ -270,6 +343,167 @@ export default function SubmitTaskPage() {
             </motion.div>
           )}
 
+          {/* Comment Field (for content moderation when text is not required) */}
+          {isFieldRequired('comment') && !isFieldRequired('text') && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mb-6"
+            >
+              <label className="block text-sm font-semibold text-foreground mb-3">
+                Comment to Review *
+              </label>
+              <div className="relative">
+                <textarea
+                  value={formData.comment}
+                  onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+                  rows={4}
+                  placeholder="Paste the comment to review here..."
+                  className={`w-full px-4 py-3 bg-background/50 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.comment ? 'border-red-500' : 'border-orange-500/30'
+                    } text-foreground placeholder:text-foreground/40`}
+                />
+                {errors.comment && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2 text-sm text-red-500 flex items-center gap-1"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    {errors.comment}
+                  </motion.p>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Decision Field (for content moderation) */}
+          {isFieldRequired('decision') && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="mb-6"
+            >
+              <label className="block text-sm font-semibold text-foreground mb-3">
+                Moderation Decision *
+              </label>
+              <div className="relative">
+                <select
+                  value={formData.decision}
+                  onChange={(e) => setFormData({ ...formData, decision: e.target.value })}
+                  className={`w-full px-4 py-3 bg-background/50 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.decision ? 'border-red-500' : 'border-orange-500/30'
+                    } text-foreground`}
+                >
+                  <option value="">Select a decision...</option>
+                  <option value="approved">✅ Approve - Content is appropriate</option>
+                  <option value="rejected">❌ Reject - Content violates rules</option>
+                  <option value="flagged">🚩 Flag for Review - Needs human review</option>
+                </select>
+                {errors.decision && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2 text-sm text-red-500 flex items-center gap-1"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    {errors.decision}
+                  </motion.p>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Labels Field (for image labeling) */}
+          {isFieldRequired('labels') && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mb-6"
+            >
+              <label className="block text-sm font-semibold text-foreground mb-3">
+                Image Labels *
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.labels}
+                  onChange={(e) => setFormData({ ...formData, labels: e.target.value })}
+                  placeholder="Enter labels separated by commas (e.g., car, tree, building)"
+                  className={`w-full px-4 py-3 bg-background/50 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${errors.labels ? 'border-red-500' : 'border-orange-500/30'
+                    } text-foreground placeholder:text-foreground/40`}
+                />
+                {errors.labels && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2 text-sm text-red-500 flex items-center gap-1"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    {errors.labels}
+                  </motion.p>
+                )}
+                <p className="mt-2 text-sm text-foreground/60">
+                  Separate multiple labels with commas
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Survey Answers Field */}
+          {isFieldRequired('answers') && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="mb-6"
+            >
+              <label className="block text-sm font-semibold text-foreground mb-4">
+                Survey Questions *
+              </label>
+              <div className="space-y-4">
+                {getSurveyQuestions().map((question: string, index: number) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 + index * 0.1 }}
+                    className="bg-gradient-to-br from-orange-500/5 to-orange-600/5 backdrop-blur-sm border border-orange-500/20 rounded-2xl p-4"
+                  >
+                    <p className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                      <span className="w-6 h-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                        {index + 1}
+                      </span>
+                      {question}
+                    </p>
+                    <textarea
+                      value={formData.answers[index] || ''}
+                      onChange={(e) => {
+                        const newAnswers = [...formData.answers];
+                        newAnswers[index] = e.target.value;
+                        setFormData({ ...formData, answers: newAnswers });
+                      }}
+                      rows={3}
+                      placeholder="Enter your answer here..."
+                      className="w-full px-4 py-3 bg-background/50 border border-orange-500/20 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all text-foreground placeholder:text-foreground/40"
+                    />
+                  </motion.div>
+                ))}
+              </div>
+              {errors.answers && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-3 text-sm text-red-500 flex items-center gap-1"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  {errors.answers}
+                </motion.p>
+              )}
+            </motion.div>
+          )}
+
           {/* Image Labeling */}
           {task.taskType === TaskType.IMAGE_LABELING && (
             <motion.div
@@ -281,9 +515,8 @@ export default function SubmitTaskPage() {
               <label className="block text-sm font-semibold text-foreground mb-3">
                 Upload Image *
               </label>
-              <div className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all ${
-                errors.image ? 'border-red-500' : 'border-orange-500/30 hover:border-orange-500/50'
-              }`}>
+              <div className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all ${errors.image ? 'border-red-500' : 'border-orange-500/30 hover:border-orange-500/50'
+                }`}>
                 {imagePreview ? (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -356,11 +589,87 @@ export default function SubmitTaskPage() {
             </motion.div>
           )}
 
+          {/* Task-specific Instructions */}
+          {(isFieldRequired('text') && isFieldRequired('image')) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/30 rounded-2xl p-4 mb-6"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-foreground font-medium mb-1">📋 Mixed Task Instructions</p>
+                  <p className="text-sm text-foreground/70">
+                    This task requires both text and image inputs. Please provide both components to complete your submission.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Additional Context for Complex Tasks */}
+          {task?.verificationCriteria?.aiPrompt && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.52 }}
+              className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/30 rounded-2xl p-4 mb-6"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm text-foreground font-medium mb-1">🎯 Verification Criteria</p>
+                  <p className="text-sm text-foreground/70">
+                    AI will verify your submission based on: {task.verificationCriteria.aiPrompt}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Required Fields Summary */}
+          {requiredFields.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.54 }}
+              className="bg-gradient-to-br from-green-500/10 to-green-600/5 border border-green-500/30 rounded-2xl p-4 mb-6"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-foreground font-medium mb-2">✅ Required Fields</p>
+                  <div className="flex flex-wrap gap-2">
+                    {requiredFields.map((field: string) => (
+                      <motion.span
+                        key={field}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.56 + requiredFields.indexOf(field) * 0.05 }}
+                        className="px-3 py-1 bg-green-500/20 text-green-700 dark:text-green-300 text-xs rounded-full font-medium border border-green-500/30"
+                      >
+                        {field.charAt(0).toUpperCase() + field.slice(1)}
+                      </motion.span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* Warning */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.6 }}
             className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/30 rounded-2xl p-4 mb-6"
           >
             <div className="flex items-start gap-3">
