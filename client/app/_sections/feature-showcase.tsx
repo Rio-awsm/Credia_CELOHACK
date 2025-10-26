@@ -23,7 +23,7 @@ export function FeatureShowcase() {
       title: "Instant Payments",
       description: "Earn cUSD instantly on Celo Sepolia. Withdraw anytime with zero fees.",
       icon: Wallet,
-      gradient: "from-accent to-primary",
+      gradient: "from-primary to-orange-500",
       delay: 0.4,
     },
   ]

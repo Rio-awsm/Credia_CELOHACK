@@ -1,10 +1,34 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/hooks/useAuth";
+import { useCUSDBalance } from "@/hooks/useCUSDBalance";
+import { useWalletConnection } from "@/hooks/useWalletConnection";
 import { motion } from "framer-motion"
 import { ArrowRight, Sparkles } from "lucide-react"
+import { useState } from "react";
 
 export function HeroSection() {
+  const { address, isConnected, isConnecting, connect, disconnect, chainId } = useWalletConnection();
+    const { authenticate, isAuthenticating, clearAuth, isAuthenticated } = useAuth();
+    const { data: balance } = useCUSDBalance(address);
+    const [showNetworkModal, setShowNetworkModal] = useState(false);
+  
+    const expectedChainId = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || '11142220');
+    const isWrongNetwork = isConnected && chainId !== expectedChainId;
+  
+    const handleConnect = async () => {
+      try {
+        // Step 1: Connect wallet
+        await connect();
+  
+        // Step 2: Authenticate
+        await authenticate();
+      } catch (error) {
+        console.error('Connection/Authentication error:', error);
+      }
+    };
+  
   return (
     <section className="relative min-h-[800px] flex items-center justify-center overflow-hidden px-4 sm:px-6 lg:px-8 py-20 pt-32">
       <div className="absolute inset-0 overflow-hidden">
@@ -79,6 +103,7 @@ export function HeroSection() {
         >
           <motion.div whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
             <Button
+              onClick={handleConnect}
               size="lg"
               className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold px-8"
             >

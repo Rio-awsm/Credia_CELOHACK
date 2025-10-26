@@ -13,7 +13,7 @@ export function WalletButton() {
   const { data: balance } = useCUSDBalance(address);
   const [showNetworkModal, setShowNetworkModal] = useState(false);
 
-  const expectedChainId = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || '44787');
+  const expectedChainId = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || '11142220');
   const isWrongNetwork = isConnected && chainId !== expectedChainId;
 
   const handleConnect = async () => {
@@ -82,7 +82,7 @@ export function WalletButton() {
         {/* Disconnect */}
         <button
           onClick={handleDisconnect}
-          className="px-4 py-2 text-sm text-white hover:text-red-600 transition-colors"
+          className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium disabled:bg-gray-400 animate-pulse"
         >
           Disconnect
         </button>
@@ -94,7 +94,7 @@ export function WalletButton() {
     <button
       onClick={handleConnect}
       disabled={isConnecting || isAuthenticating}
-      className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold"
+      className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium disabled:bg-gray-400 animate-pulse"
     >
       {isConnecting || isAuthenticating ? 'Connecting...' : 'Connect Wallet'}
     </button>

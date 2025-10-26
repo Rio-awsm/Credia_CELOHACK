@@ -34,7 +34,7 @@ async function seedTasks() {
     // Define tasks to seed
     const tasks = [
       {
-        title: 'Verify Text - Grammar and Clarity 2',
+        title: 'Verify Text - Grammar and Clarity',
         description: 'Check if the provided text is grammatically correct and clear.',
         taskType: TaskType.TEXT_VERIFICATION,
         paymentAmount: 0.01,
@@ -46,7 +46,7 @@ async function seedTasks() {
         expiresAt: new Date('2025-11-05T00:00:00Z'),
       },
       {
-        title: 'Image Labeling - Identify Objects 2',
+        title: 'Image Labeling - Identify Objects',
         description: 'Label all visible objects in the provided image.',
         taskType: TaskType.IMAGE_LABELING,
         paymentAmount: 0.02,
@@ -58,7 +58,7 @@ async function seedTasks() {
         expiresAt: new Date('2025-11-10T00:00:00Z'),
       },
       {
-        title: 'Survey - User Experience Feedback 2',
+        title: 'Survey - User Experience Feedback',
         description: 'Answer short questions about app usability.',
         taskType: TaskType.SURVEY,
         paymentAmount: 0.015,
@@ -70,7 +70,7 @@ async function seedTasks() {
         expiresAt: new Date('2025-11-15T00:00:00Z'),
       },
       {
-        title: 'Content Moderation - Comment Review 2',
+        title: 'Content Moderation - Comment Review',
         description: 'Flag inappropriate or spammy comments.',
         taskType: TaskType.CONTENT_MODERATION,
         paymentAmount: 0.025,
