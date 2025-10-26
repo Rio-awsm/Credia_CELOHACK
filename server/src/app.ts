@@ -6,6 +6,7 @@ import { createQueueDashboard } from './dashboard';
 import { testConnection } from './database/connections';
 import { ErrorMiddleware } from './middlewares/error.middleware';
 import routes from './routes';
+import './workers'; // Start verification worker
 
 export function createApp(): Application {
   const app = express();

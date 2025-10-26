@@ -1,9 +1,9 @@
 import { PROMPTS } from '../config/ai.config';
 import {
-    GeminiResponse,
-    ImageVerificationInput,
-    TextVerificationInput,
-    VerificationResult,
+  GeminiResponse,
+  ImageVerificationInput,
+  TextVerificationInput,
+  VerificationResult,
 } from '../types/ai.types';
 import { cacheService } from './cache.service';
 import { geminiService } from './gemini.service';
@@ -19,7 +19,7 @@ export class AIVerificationService {
     // Check cache first
     const cacheKey = cacheService.generateKey('text_verification', input);
     const cached = await cacheService.get<VerificationResult>(cacheKey);
-    
+
     if (cached) {
       console.log('✅ Returning cached verification result');
       return cached;
@@ -32,10 +32,32 @@ export class AIVerificationService {
         .replace('{submissionText}', input.submissionText);
 
       // Call Gemini API
+      console.log('📤 Sending prompt to Gemini...');
       const responseText = await geminiService.generateText(prompt);
+      console.log('📥 Received response from Gemini');
+      console.log('Response length:', responseText.length, 'chars');
 
       // Parse JSON response
-      const geminiResponse = geminiService.parseJsonResponse<GeminiResponse>(responseText);
+      let geminiResponse: GeminiResponse;
+      try {
+        geminiResponse = geminiService.parseJsonResponse<GeminiResponse>(responseText);
+      } catch (parseError) {
+        console.error('❌ JSON parse failed, attempting recovery...');
+
+        // Attempt to extract key information from text response
+        const approved = /approved['":\s]+true/i.test(responseText);
+        const scoreMatch = responseText.match(/score['":\s]+(\d+)/i);
+        const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+
+        geminiResponse = {
+          approved,
+          score,
+          reasoning: 'Auto-extracted from malformed response: ' + responseText.substring(0, 200),
+          violations: [],
+        };
+
+        console.log('⚠️ Using fallback parsing:', geminiResponse);
+      }
 
       // Build verification result
       const result: VerificationResult = {
@@ -70,7 +92,7 @@ export class AIVerificationService {
     // Check cache first
     const cacheKey = cacheService.generateKey('image_verification', input);
     const cached = await cacheService.get<VerificationResult>(cacheKey);
-    
+
     if (cached) {
       console.log('✅ Returning cached verification result');
       return cached;
@@ -209,7 +231,7 @@ export class AIVerificationService {
       const parsed = new URL(url);
       const validProtocols = ['http:', 'https:'];
       const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-      
+
       return (
         validProtocols.includes(parsed.protocol) &&
         validExtensions.some((ext) => parsed.pathname.toLowerCase().endsWith(ext))

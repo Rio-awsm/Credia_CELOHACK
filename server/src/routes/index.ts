@@ -2,6 +2,7 @@ import { Router } from 'express';
 import submissionRoutes from './submission.routes';
 import taskRoutes from './task.routes';
 import userRoutes from './user.routes';
+import paymentRoutes from './payment.routes';
 
 const router = Router();
 
@@ -18,6 +19,7 @@ router.get('/health', (req, res) => {
 router.use('/tasks', taskRoutes);
 router.use('/submissions', submissionRoutes);
 router.use('/users', userRoutes);
+router.use('/payments', paymentRoutes);
 
 // Test routes (development only)
 if (process.env.NODE_ENV === 'development') {

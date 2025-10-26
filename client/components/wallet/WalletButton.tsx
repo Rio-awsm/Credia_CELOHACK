@@ -2,12 +2,14 @@
 
 import { useCUSDBalance } from '@/hooks/useCUSDBalance';
 import { useWalletConnection } from '@/hooks/useWalletConnection';
+import { useAuth } from '@/hooks/useAuth';
 import { formatAddress } from '@/lib/celo';
 import { useState } from 'react';
 import { NetworkSwitchModal } from '../modals/NetworkSwitchModal';
 
 export function WalletButton() {
   const { address, isConnected, isConnecting, connect, disconnect, chainId } = useWalletConnection();
+  const { authenticate, isAuthenticating, clearAuth, isAuthenticated } = useAuth();
   const { data: balance } = useCUSDBalance(address);
   const [showNetworkModal, setShowNetworkModal] = useState(false);
 
@@ -16,11 +18,36 @@ export function WalletButton() {
 
   const handleConnect = async () => {
     try {
+      // Step 1: Connect wallet
       await connect();
+
+      // Step 2: Authenticate
+      await authenticate();
     } catch (error) {
-      console.error('Connection error:', error);
+      console.error('Connection/Authentication error:', error);
     }
   };
+
+  const handleDisconnect = () => {
+    // Clear authentication data
+    clearAuth();
+
+    // Disconnect wallet
+    disconnect();
+  };
+
+  // Show "Re-authenticate" button if connected but not authenticated
+  if (isConnected && address && !isAuthenticated && !isWrongNetwork) {
+    return (
+      <button
+        onClick={() => authenticate()}
+        disabled={isAuthenticating}
+        className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium disabled:bg-gray-400 animate-pulse"
+      >
+        {isAuthenticating ? 'Authenticating...' : '🔐 Sign to Authenticate'}
+      </button>
+    );
+  }
 
   if (isWrongNetwork) {
     return (
@@ -54,7 +81,7 @@ export function WalletButton() {
 
         {/* Disconnect */}
         <button
-          onClick={disconnect}
+          onClick={handleDisconnect}
           className="px-4 py-2 text-sm text-gray-700 hover:text-red-600 transition-colors"
         >
           Disconnect
@@ -66,10 +93,10 @@ export function WalletButton() {
   return (
     <button
       onClick={handleConnect}
-      disabled={isConnecting}
+      disabled={isConnecting || isAuthenticating}
       className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:bg-gray-400"
     >
-      {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+      {isConnecting || isAuthenticating ? 'Connecting...' : 'Connect Wallet'}
     </button>
   );
 }

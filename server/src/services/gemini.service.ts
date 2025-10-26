@@ -27,6 +27,7 @@ export class GeminiService {
           generationConfig: {
             temperature: aiConfig.temperature,
             maxOutputTokens: aiConfig.maxOutputTokens,
+            responseMimeType: "application/json", // Force JSON response
           },
         });
 
@@ -58,6 +59,7 @@ export class GeminiService {
           generationConfig: {
             temperature: aiConfig.temperature,
             maxOutputTokens: aiConfig.maxOutputTokens,
+            responseMimeType: "application/json", // Force JSON response
           },
         });
 
@@ -98,16 +100,37 @@ export class GeminiService {
     try {
       // Remove markdown code blocks if present
       let cleaned = responseText.trim();
-      
+
       if (cleaned.startsWith('```json')) {
         cleaned = cleaned.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
       } else if (cleaned.startsWith('```')) {
         cleaned = cleaned.replace(/```\n?/g, '');
       }
 
-      return JSON.parse(cleaned);
+      // Try to extract JSON object if there's extra text
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleaned = jsonMatch[0];
+      }
+
+      // Additional cleanup - remove any trailing commas before closing braces
+      cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1');
+
+      const parsed = JSON.parse(cleaned);
+
+      // Validate that we got an object back
+      if (typeof parsed !== 'object' || parsed === null) {
+        throw new Error('Response is not a valid JSON object');
+      }
+
+      return parsed;
     } catch (error) {
-      console.error('Failed to parse JSON response:', responseText);
+      console.error('Failed to parse JSON response. Raw response:', responseText);
+      console.error('Parse error:', error);
+
+      // Log the first 500 chars for debugging
+      console.error('Response preview:', responseText.substring(0, 500));
+
       throw new Error(`Invalid JSON response from Gemini: ${error}`);
     }
   }

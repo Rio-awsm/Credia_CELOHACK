@@ -5,19 +5,19 @@ export const aiConfig: AIServiceConfig = {
   model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
   temperature: 0, // Consistent results
   maxOutputTokens: 1024,
-  
+
   cache: {
     enabled: process.env.REDIS_URL ? true : false,
     ttl: 3600, // 1 hour cache
   },
-  
+
   retry: {
     maxRetries: 3,
     initialDelay: 1000, // 1 second
     maxDelay: 10000, // 10 seconds
     backoffMultiplier: 2,
   },
-  
+
   rateLimit: {
     maxRequests: 60, // 60 requests per minute
     windowMs: 60 * 1000, // 1 minute
@@ -40,15 +40,17 @@ TASK:
 3. List any violations or issues
 4. Give approval recommendation (APPROVE/REJECT)
 
-OUTPUT FORMAT (JSON only):
+CRITICAL: Respond with ONLY a valid JSON object. No markdown, no code blocks, no explanations.
+
+Required JSON format:
 {
-  "approved": boolean,
-  "score": number,
-  "violations": string[],
-  "reasoning": string
+  "approved": true,
+  "score": 85,
+  "violations": ["issue 1", "issue 2"],
+  "reasoning": "Brief explanation"
 }
 
-Be strict but fair. Only approve submissions that clearly meet criteria. Return ONLY valid JSON, no markdown or additional text.`,
+Your response:`,
 
   IMAGE_VERIFICATION: `You are an image verification expert. Analyze this image against the task requirements.
 
@@ -64,14 +66,16 @@ Analyze the image and determine:
 3. Are there any inappropriate or irrelevant elements?
 4. Quality score (0-100)
 
-OUTPUT FORMAT (JSON only):
+CRITICAL: Respond with ONLY a valid JSON object. No markdown, no code blocks, no explanations.
+
+Required JSON format:
 {
-  "approved": boolean,
-  "score": number,
-  "image_quality": "excellent" | "good" | "poor",
-  "issues": string[],
-  "reasoning": string
+  "approved": true,
+  "score": 90,
+  "image_quality": "excellent",
+  "issues": ["issue 1"],
+  "reasoning": "Brief explanation"
 }
 
-Return ONLY valid JSON, no markdown or additional text.`,
+Your response:`,
 };

@@ -17,12 +17,21 @@ export class AuthMiddleware {
       // Get auth headers
       const walletAddress = req.headers['x-wallet-address'] as string;
       const signature = req.headers['x-signature'] as string;
-      const message = req.headers['x-message'] as string;
+      const encodedMessage = req.headers['x-message'] as string;
       const timestamp = parseInt(req.headers['x-timestamp'] as string);
 
       // Check if all required headers are present
-      if (!walletAddress || !signature || !message || !timestamp) {
+      if (!walletAddress || !signature || !encodedMessage || !timestamp) {
         ResponseUtil.unauthorized(res, 'Missing authentication headers');
+        return;
+      }
+
+      // Decode the Base64-encoded message
+      let message: string;
+      try {
+        message = decodeURIComponent(Buffer.from(encodedMessage, 'base64').toString());
+      } catch (decodeError) {
+        ResponseUtil.unauthorized(res, 'Invalid message encoding');
         return;
       }
 
@@ -41,7 +50,7 @@ export class AuthMiddleware {
 
       // Verify signature
       const isValid = SignatureUtil.verifySignature(message, signature, walletAddress);
-      
+
       if (!isValid) {
         ResponseUtil.unauthorized(res, 'Invalid signature');
         return;

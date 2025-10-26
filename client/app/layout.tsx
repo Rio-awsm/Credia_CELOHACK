@@ -1,5 +1,6 @@
 import { Navbar } from '@/components/layout/Navbar';
 import { QueryProvider } from '@/providers/QueryProvider';
+import { AuthProvider } from '@/providers/AuthProvider';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -20,10 +21,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <QueryProvider>
-          <div className="min-h-screen bg-gray-50">
-            <Navbar />
-            <main>{children}</main>
-          </div>
+          <AuthProvider>
+            <div className="min-h-screen bg-gray-50">
+              <Navbar />
+              <main>{children}</main>
+            </div>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

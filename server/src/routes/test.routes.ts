@@ -115,6 +115,44 @@ if (process.env.NODE_ENV === 'development') {
     }
   });
 
+  /**
+   * POST /api/test/reprocess/:submissionId
+   * Re-enqueue an existing approved/failed submission to finalize payment or retry processing
+   */
+  router.post('/reprocess/:submissionId', async (req: Request, res: Response) => {
+    try {
+      const { submissionId } = req.params;
+
+      const submission = await prisma.submission.findUnique({
+        where: { id: submissionId },
+        include: { task: true },
+      });
+
+      if (!submission) {
+        return ResponseUtil.notFound(res, 'Submission');
+      }
+
+      await addVerificationJob({
+        submissionId: submission.id,
+        taskId: submission.taskId,
+        workerId: submission.workerId,
+        submissionData: submission.submissionData,
+        verificationCriteria: submission.task.verificationCriteria,
+        taskType: submission.task.taskType,
+      });
+
+      return ResponseUtil.success(res, {
+        message: 'Submission re-enqueued for processing',
+        submissionId: submission.id,
+        taskId: submission.taskId,
+        status: submission.verificationStatus,
+      });
+    } catch (error) {
+      console.error('Reprocess submission error:', error);
+      return ResponseUtil.internalError(res, 'Failed to re-enqueue submission');
+    }
+  });
+
   console.log('⚠️  Test routes enabled (development mode only)');
 }
 

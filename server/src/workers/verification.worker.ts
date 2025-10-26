@@ -7,6 +7,8 @@ import {
 import { aiVerificationService } from "../services/ai-verification.service";
 import { blockchainService } from "../services/blockchain.service";
 import { contentModerationService } from "../services/content-moderation.service";
+import { paymentService } from "../services/payment.service";
+import { webhookService } from "../services/webhook.service";
 import {
   notificationService,
   NotificationType,
@@ -79,6 +81,13 @@ async function processVerification(
     // Auto-reject if flagged by moderation
     if (moderationResult.action === ModerationAction.AUTO_REJECT) {
       console.log("🚫 Auto-rejected by content moderation");
+
+      // Rollback pending payment
+      try {
+        await paymentService.rollbackPayment(taskId, workerId);
+      } catch (rollbackError) {
+        console.error("Failed to rollback payment:", rollbackError);
+      }
 
       await prisma.submission.update({
         where: { id: submissionId },
@@ -155,35 +164,82 @@ async function processVerification(
       console.log("⛓️  Step 5: Calling smart contract to release payment...");
 
       if (!submission.task.contractTaskId) {
-        throw new Error("Contract task ID not found");
+        console.error("❌ Contract task ID not found - task was not created on blockchain!");
+
+        // Update submission status back to rejected since we can't process payment
+        await prisma.submission.update({
+          where: { id: submissionId },
+          data: {
+            verificationStatus: VerificationStatus.REJECTED,
+            aiVerificationResult: JSON.parse(
+              JSON.stringify({
+                verification: verificationResult,
+                moderation: moderationResult,
+                finalApproval: false,
+                error: "Task not created on blockchain - cannot process payment",
+                timestamp: new Date().toISOString(),
+              })
+            ),
+          },
+        });
+
+        // Rollback payment
+        await paymentService.rollbackPayment(taskId, workerId);
+
+        // Notify worker
+        await notificationService.send(workerId, {
+          type: NotificationType.SUBMISSION_REJECTED,
+          taskId,
+          submissionId,
+          result: { error: "Task not created on blockchain - cannot process payment" },
+        });
+
+        throw new Error("Contract task ID not found - task was not created on blockchain");
       }
 
-      const txHash = await blockchainService.approveSubmission(
-        submission.task.contractTaskId
+      // Use payment service with retry logic and error handling
+      const paymentResult = await paymentService.approveSubmissionWithRetry(
+        taskId,
+        submissionId,
+        workerId,
+        submission.task.contractTaskId,
+        submission.task.paymentAmount.toString()
       );
 
-      console.log(`✅ Payment transaction: ${txHash}`);
+      if (!paymentResult.success) {
+        console.error(
+          `❌ Payment failed after ${paymentResult.attempts} attempts: ${paymentResult.error}`
+        );
 
-      // Create payment record
-      await prisma.payment.create({
-        data: {
-          taskId,
-          workerId,
-          amount: submission.task.paymentAmount,
-          transactionHash: txHash,
-          status: "completed",
-        },
-      });
+        // Revert submission status to rejected since blockchain payment failed
+        await prisma.submission.update({
+          where: { id: submissionId },
+          data: {
+            verificationStatus: VerificationStatus.REJECTED,
+            aiVerificationResult: JSON.parse(
+              JSON.stringify({
+                verification: verificationResult,
+                moderation: moderationResult,
+                finalApproval: false,
+                blockchainError: paymentResult.error,
+                error: "Blockchain payment failed - task may not exist on contract",
+                timestamp: new Date().toISOString(),
+              })
+            ),
+          },
+        });
 
-      // Update submission with transaction hash
-      await prisma.submission.update({
-        where: { id: submissionId },
-        data: {
-          paymentTransactionHash: txHash,
-        },
-      });
+        // Rollback payment
+        await paymentService.rollbackPayment(taskId, workerId);
 
-      // Update task status
+        throw new Error(
+          `Payment processing failed: ${paymentResult.error}`
+        );
+      }
+
+      console.log(`✅ Payment successful: ${paymentResult.txHash}`);
+
+      // Update task status to completed
       await prisma.task.update({
         where: { id: taskId },
         data: { status: "completed" },
@@ -202,16 +258,50 @@ async function processVerification(
         },
       });
 
+      // Send webhook for payment completed
+      await webhookService.sendPaymentCompleted({
+        submissionId,
+        taskId,
+        workerId,
+        amount: Number(submission.task.paymentAmount),
+        transactionHash: paymentResult.txHash!,
+      });
+
+      // Send webhook for submission approved
+      await webhookService.sendSubmissionApproved({
+        submissionId,
+        taskId,
+        workerId,
+        verificationScore: verificationResult.score || 0,
+      });
+
       // Notify worker about approval and payment
       await notificationService.send(workerId, {
         type: NotificationType.PAYMENT_RELEASED,
         taskId,
         submissionId,
         amount: Number(submission.task.paymentAmount),
-        txHash,
+        txHash: paymentResult.txHash,
         result: verificationResult,
       });
     } else {
+      // Rollback pending payment on rejection
+      try {
+        await paymentService.rollbackPayment(taskId, workerId);
+        console.log("✅ Pending payment rolled back");
+      } catch (rollbackError) {
+        console.error("Failed to rollback payment:", rollbackError);
+      }
+
+      // Send webhook for submission rejected
+      await webhookService.sendSubmissionRejected({
+        submissionId,
+        taskId,
+        workerId,
+        reason: moderationResult.flagged ? "Content moderation failed" : "Failed verification",
+        verificationScore: verificationResult.score || 0,
+      });
+
       // Notify worker about rejection
       await notificationService.send(workerId, {
         type: NotificationType.SUBMISSION_REJECTED,

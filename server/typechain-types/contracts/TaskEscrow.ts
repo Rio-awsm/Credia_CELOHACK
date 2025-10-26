@@ -83,6 +83,7 @@ export interface TaskEscrowInterface extends Interface {
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "DebugLog"
       | "OwnershipTransferred"
       | "Paused"
       | "PaymentReleased"
@@ -233,6 +234,31 @@ export interface TaskEscrowInterface extends Interface {
   ): Result;
 }
 
+export namespace DebugLogEvent {
+  export type InputTuple = [
+    action: string,
+    sender: AddressLike,
+    taskId: BigNumberish,
+    timestamp: BigNumberish
+  ];
+  export type OutputTuple = [
+    action: string,
+    sender: string,
+    taskId: bigint,
+    timestamp: bigint
+  ];
+  export interface OutputObject {
+    action: string;
+    sender: string;
+    taskId: bigint;
+    timestamp: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace OwnershipTransferredEvent {
   export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
   export type OutputTuple = [previousOwner: string, newOwner: string];
@@ -300,17 +326,17 @@ export namespace TaskCancelledEvent {
   export type InputTuple = [
     taskId: BigNumberish,
     requester: AddressLike,
-    refundAmount: BigNumberish
+    refunded: BigNumberish
   ];
   export type OutputTuple = [
     taskId: bigint,
     requester: string,
-    refundAmount: bigint
+    refunded: bigint
   ];
   export interface OutputObject {
     taskId: bigint;
     requester: string;
-    refundAmount: bigint;
+    refunded: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -322,19 +348,19 @@ export namespace TaskCreatedEvent {
   export type InputTuple = [
     taskId: BigNumberish,
     requester: AddressLike,
-    paymentAmount: BigNumberish,
+    payment: BigNumberish,
     expiresAt: BigNumberish
   ];
   export type OutputTuple = [
     taskId: bigint,
     requester: string,
-    paymentAmount: bigint,
+    payment: bigint,
     expiresAt: bigint
   ];
   export interface OutputObject {
     taskId: bigint;
     requester: string;
-    paymentAmount: bigint;
+    payment: bigint;
     expiresAt: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -347,17 +373,17 @@ export namespace TaskExpiredEvent {
   export type InputTuple = [
     taskId: BigNumberish,
     requester: AddressLike,
-    refundAmount: BigNumberish
+    refunded: BigNumberish
   ];
   export type OutputTuple = [
     taskId: bigint,
     requester: string,
-    refundAmount: bigint
+    refunded: bigint
   ];
   export interface OutputObject {
     taskId: bigint;
     requester: string;
-    refundAmount: bigint;
+    refunded: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -630,6 +656,13 @@ export interface TaskEscrow extends BaseContract {
   ): TypedContractMethod<[], [void], "nonpayable">;
 
   getEvent(
+    key: "DebugLog"
+  ): TypedContractEvent<
+    DebugLogEvent.InputTuple,
+    DebugLogEvent.OutputTuple,
+    DebugLogEvent.OutputObject
+  >;
+  getEvent(
     key: "OwnershipTransferred"
   ): TypedContractEvent<
     OwnershipTransferredEvent.InputTuple,
@@ -694,6 +727,17 @@ export interface TaskEscrow extends BaseContract {
   >;
 
   filters: {
+    "DebugLog(string,address,uint256,uint256)": TypedContractEvent<
+      DebugLogEvent.InputTuple,
+      DebugLogEvent.OutputTuple,
+      DebugLogEvent.OutputObject
+    >;
+    DebugLog: TypedContractEvent<
+      DebugLogEvent.InputTuple,
+      DebugLogEvent.OutputTuple,
+      DebugLogEvent.OutputObject
+    >;
+
     "OwnershipTransferred(address,address)": TypedContractEvent<
       OwnershipTransferredEvent.InputTuple,
       OwnershipTransferredEvent.OutputTuple,
