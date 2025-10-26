@@ -91,7 +91,7 @@ An **AI-powered decentralized task marketplace** built on **Celo Sepolia Testnet
 
 ---
 
-## 🤖 AI Integration (Google Gemini 1.5 Pro)
+## 🤖 AI Integration (Google Gemini 2.5 Pro)
 
 Used for:
 
