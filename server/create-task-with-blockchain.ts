@@ -39,7 +39,7 @@ async function createTaskDirectly() {
 
         // Task details
         const taskData = {
-            title: 'Verify this text - BLOCKCHAIN TASK',
+            title: 'Verify this text - BLOCKCHAIN TASK 3',
             description: 'Check if text makes sense. This task has proper blockchain integration!',
             taskType: TaskType.TEXT_VERIFICATION,
             paymentAmount: 0.01,

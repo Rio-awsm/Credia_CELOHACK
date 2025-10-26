@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin Dashboard - Create Task</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+        min-height: 100vh;
+        padding: 2rem;
+        color: #fff;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      .header {
+        text-align: center;
+        color: #ff9500;
+        margin-bottom: 2rem;
+      }
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+        text-shadow: 0 0 20px rgba(255, 149, 0, 0.3);
+      }
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.8;
+        color: #ccc;
+      }
+      .card {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5),
+          0 0 30px rgba(255, 149, 0, 0.1);
+        border: 1px solid rgba(255, 149, 0, 0.15);
+      }
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+      .form-group:last-of-type {
+        margin-bottom: 0;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        color: #ff9500;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid rgba(255, 149, 0, 0.2);
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: all 0.3s ease;
+        background: rgba(0, 0, 0, 0.3);
+        color: #fff;
+      }
+      input::placeholder,
+      select::placeholder,
+      textarea::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #ff9500;
+        box-shadow: 0 0 0 3px rgba(255, 149, 0, 0.2),
+          inset 0 0 10px rgba(255, 149, 0, 0.05);
+        background: rgba(0, 0, 0, 0.5);
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .form-row .form-group {
+        margin-bottom: 0;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+      button {
+        width: 100%;
+        padding: 0.875rem 1.5rem;
+        background: linear-gradient(135deg, #ff9500 0%, #ff7700 100%);
+        color: #000;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(255, 149, 0, 0.3);
+      }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 149, 0, 0.5);
+        background: linear-gradient(135deg, #ffaa00 0%, #ff8800 100%);
+      }
+      button:active {
+        transform: translateY(0);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: 0 4px 15px rgba(255, 149, 0, 0.1);
+      }
+      .result {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid #ff9500;
+        background: rgba(255, 149, 0, 0.1);
+        color: #fff;
+        display: none;
+      }
+      .result.success {
+        border-left-color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+      }
+      .result.error {
+        border-left-color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+      }
+      .result strong {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+        color: #ff9500;
+      }
+      .result.success strong {
+        color: #10b981;
+      }
+      .result.error strong {
+        color: #ef4444;
+      }
+      .result p {
+        margin: 0.25rem 0;
+        word-break: break-all;
+        font-size: 0.9rem;
+        font-family: "Courier New", monospace;
+        color: #ccc;
+      }
+      .loading {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid #ff9500;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>✨ Task Admin</h1>
+        <p>Create tasks on blockchain</p>
+      </div>
+
+      <div class="card">
+        <div style="background: rgba(255, 149, 0, 0.05); border: 1px solid rgba(255, 149, 0, 0.2); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.9rem;">
+          <div style="margin-bottom: 0.5rem;"><strong>Wallet Info</strong></div>
+          <div id="walletInfo" style="color: #ccc; font-family: monospace; line-height: 1.5;">Loading...</div>
+          <button id="approveBtn" style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(255, 149, 0, 0.2); color: #ff9500; font-size: 0.85rem;">Approve cUSD</button>
+        </div>
+          <label for="taskName">Task Name</label>
+          <input
+            id="taskName"
+            type="text"
+            placeholder="e.g., Image Classification Task"
+            value=""
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="taskType">Task Type</label>
+          <select id="taskType">
+            <option value="image-classification">Image Classification</option>
+            <option value="text-labeling">Text Labeling</option>
+            <option value="data-entry">Data Entry</option>
+            <option value="content-moderation">Content Moderation</option>
+            <option value="transcription">Transcription</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Task Description</label>
+          <textarea
+            id="description"
+            placeholder="Describe what needs to be done..."
+          ></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="paymentAmount">Payment (cUSD)</label>
+            <input
+              id="paymentAmount"
+              type="number"
+              placeholder="0.01"
+              value="0.01"
+              step="0.001"
+              min="0"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="duration">Duration (days)</label>
+            <input
+              id="duration"
+              type="number"
+              placeholder="7"
+              value="7"
+              min="1"
+              max="365"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="worker">Worker Address (optional)</label>
+          <input id="worker" type="text" placeholder="0x..." />
+        </div>
+
+        <button id="submit">Create Task on Blockchain</button>
+
+        <div id="result" class="result"></div>
+      </div>
+
+      <script>
+        // Load wallet info on page load
+        async function loadWalletInfo() {
+          try {
+            const resp = await fetch("/api/wallet-info");
+            if (!resp.ok) {
+              console.error("Wallet info response status:", resp.status);
+              throw new Error(`HTTP ${resp.status}`);
+            }
+            const data = await resp.json();
+            if (data.error) {
+              console.error("Wallet info error:", data.error);
+              document.getElementById("walletInfo").textContent = "Error: " + data.error;
+              return;
+            }
+            const info = document.getElementById("walletInfo");
+            info.innerHTML = `
+              <div>Address: ${data.walletAddress}</div>
+              <div>CELO: ${parseFloat(data.celoBalance).toFixed(4)}</div>
+              <div>cUSD: ${parseFloat(data.cusdBalance).toFixed(2)}</div>
+              <div>Allowance: ${parseFloat(data.contractAllowance).toFixed(2)}</div>
+            `;
+          } catch (err) {
+            console.error("loadWalletInfo error:", err);
+            document.getElementById("walletInfo").textContent = "Error loading wallet info: " + err.message;
+          }
+        }
+
+        // Approve button
+        document.getElementById("approveBtn").addEventListener("click", async () => {
+          const btn = document.getElementById("approveBtn");
+          btn.disabled = true;
+          btn.textContent = "Approving...";
+
+          try {
+            const resp = await fetch("/api/approve-cusd", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ amount: "1000000" }),
+            });
+            const data = await resp.json();
+            if (data.error) {
+              alert("Approval failed: " + data.error);
+            } else if (data.success && data.txHash) {
+              alert("Approved! Tx: " + data.txHash.substring(0, 20) + "...");
+              await new Promise(r => setTimeout(r, 2000));
+              await loadWalletInfo();
+            } else {
+              alert("Approval response: " + JSON.stringify(data));
+            }
+          } catch (err) {
+            alert("Error: " + err.message);
+            console.error("Approve error:", err);
+          } finally {
+            btn.disabled = false;
+            btn.textContent = "Approve cUSD";
+          }
+        });
+
+        const submit = document.getElementById("submit");
+        const result = document.getElementById("result");
+
+        function showResult(message, isSuccess = true, details = null) {
+          result.style.display = "block";
+          result.className = isSuccess ? "result success" : "result error";
+          result.innerHTML = `<strong>${
+            isSuccess ? "✓ Success" : "✗ Error"
+          }</strong><p>${message}</p>`;
+          if (details) {
+            result.innerHTML += `<p style="margin-top: 0.5rem; opacity: 0.8;">${details}</p>`;
+          }
+        }
+
+        submit.addEventListener("click", async () => {
+          const taskName = document.getElementById("taskName").value;
+          const taskType = document.getElementById("taskType").value;
+          const description = document.getElementById("description").value;
+          const paymentAmount = document.getElementById("paymentAmount").value;
+          const durationInDays = document.getElementById("duration").value;
+          const worker = document.getElementById("worker").value;
+
+          if (!taskName || !paymentAmount || !durationInDays) {
+            showResult(
+              "Please fill in task name, payment, and duration",
+              false
+            );
+            return;
+          }
+
+          result.style.display = "block";
+          result.className = "result";
+          result.innerHTML =
+            '<span class="loading"></span> Sending transaction...';
+          submit.disabled = true;
+
+          const body = {
+            taskName,
+            taskType,
+            description,
+            paymentAmount: parseFloat(paymentAmount),
+            durationInDays: parseInt(durationInDays),
+            workerAddress: worker || undefined,
+          };
+
+          try {
+            const resp = await fetch("/api/create-task", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+            const json = await resp.json();
+            if (json.error) {
+              showResult(json.error, false, json.details);
+            } else {
+              const txInfo = json.txHash ? `Tx: ${json.txHash.substring(0, 20)}...<br/>` : "No tx hash";
+              showResult(
+                `Task created on blockchain!`,
+                true,
+                `${txInfo}TaskId: ${json.taskId || "unknown"}<br/>Syncing to database...`
+              );
+
+              // Now sync to backend database with complete metadata
+              try {
+                const syncResp = await fetch("/api/sync-task", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    taskId: json.taskId,
+                    txHash: json.txHash,
+                    metadata: {
+                      name: taskName,
+                      type: taskType,
+                      description,
+                      paymentAmount: parseFloat(paymentAmount),
+                      durationInDays: parseInt(durationInDays),
+                      maxSubmissions: 10,
+                    },
+                  }),
+                });
+                const syncJson = await syncResp.json();
+                console.log("Sync response:", syncJson);
+                
+                if (syncResp.ok && syncJson.success) {
+                  showResult(
+                    `Task created and synced!`,
+                    true,
+                    `BlockchainId: ${json.taskId}<br/>DB ID: ${syncJson.data?.task?.id || "synced"}<br/>Status: Live in database`
+                  );
+                } else {
+                  const errorMsg = syncJson.error?.message || syncJson.error || "Unknown error";
+                  showResult(
+                    `Task created on blockchain but sync failed`,
+                    false,
+                    `BlockchainId: ${json.taskId}<br/>Error: ${errorMsg}`
+                  );
+                }
+              } catch (syncErr) {
+                showResult(
+                  `Task created on blockchain but sync failed`,
+                  false,
+                  `BlockchainId: ${json.taskId}<br/>Error: ${syncErr.message}`
+                );
+              }
+
+              // Reset form
+              document.getElementById("taskName").value = "";
+              document.getElementById("description").value = "";
+              document.getElementById("paymentAmount").value = "0.01";
+              document.getElementById("duration").value = "7";
+              document.getElementById("worker").value = "";
+              await new Promise(r => setTimeout(r, 2000));
+              await loadWalletInfo();
+            }
+          } catch (err) {
+            showResult("Request failed: " + err.message, false);
+          } finally {
+            submit.disabled = false;
+          }
+        });
+
+        // Load wallet info when page loads
+        loadWalletInfo();
+        // Refresh every 30 seconds
+        setInterval(loadWalletInfo, 30000);
+      </script>
+    </div>
+  </body>
+</html>

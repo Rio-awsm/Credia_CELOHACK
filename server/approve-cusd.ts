@@ -56,8 +56,8 @@ async function approveCUSD() {
         const currentAllowance = await cUSDContract.allowance(signer.address, taskEscrowAddress);
         console.log(`🔓 Current Allowance: ${ethers.formatEther(currentAllowance)} cUSD\n`);
 
-        // Approve a large amount (1 million cUSD) so we don't need to approve again
-        const approvalAmount = ethers.parseEther('1000000');
+        // Approve a large amount (10 million cUSD) so we don't need to approve again
+        const approvalAmount = ethers.parseEther('10000000');
         console.log(`⏳ Approving ${ethers.formatEther(approvalAmount)} cUSD...`);
 
         const tx = await cUSDContract.approve(taskEscrowAddress, approvalAmount);
