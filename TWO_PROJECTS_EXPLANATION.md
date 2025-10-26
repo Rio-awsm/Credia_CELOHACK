@@ -5,12 +5,14 @@
 You have **two separate project instances** on different drives that are interfering with each other:
 
 ### ✅ Current Workspace (Primary)
+
 - **Location**: `C:\Users\RAJ\OneDrive\Desktop\micro-job-ai-agent-web3`
 - **Status**: ✅ Working perfectly
 - **Contract**: `0xa520d207c91C0FE0e9cFe8D63AbE02fd18B2254e`
 - **cUSD**: `0x845D9D0B4Be004Dcbc17b11160B0C18abBD5FEBD`
 
 ### ❌ Other Instance (External)
+
 - **Location**: `D:\new-celo\server`
 - **Status**: ❌ Has mismatched contracts
 - **Contract**: `0x1744505ae24f747C0D92343206E658c09EF69CDC`
@@ -45,6 +47,7 @@ The backend process running is from `D:\new-celo`, not the current workspace.
 ## The Solution
 
 ### Step 1: Verify You're Using the Right Backend
+
 Check which server you're running:
 
 ```bash
@@ -57,6 +60,7 @@ npx tsx show-env-info.ts
 ```
 
 ### Step 2: Verify Client is Using Right Addresses
+
 Check client `.env.local`:
 
 ```bash
@@ -69,6 +73,7 @@ cat .env.local  # or `type .env.local` on Windows
 ✅ Both are now correct!
 
 ### Step 3: Restart Everything
+
 ```bash
 # Kill all running processes first!
 
@@ -76,12 +81,13 @@ cat .env.local  # or `type .env.local` on Windows
 cd C:\Users\RAJ\OneDrive\Desktop\micro-job-ai-agent-web3\server
 npm run dev
 
-# Terminal 2: Client  
+# Terminal 2: Client
 cd C:\Users\RAJ\OneDrive\Desktop\micro-job-ai-agent-web3\client
 npm run dev
 ```
 
 ### Step 4: Test End-to-End
+
 1. Go to http://localhost:3000
 2. Create a new task (this will use the correct contract)
 3. Submit to the task
@@ -97,10 +103,12 @@ npm run dev
 When testing, you may deploy multiple contracts:
 
 1. **First Deploy**: `0xA0e793E7257c065b30c46Ef6828F2B3C0de87A8E` (Old)
+
    - Tests, experiments
    - Tasks from this are lost
 
 2. **Second Deploy**: `0xa520d207c91C0FE0e9cFe8D63AbE02fd18B2254e` (Current ✅)
+
    - New setup with correct cUSD
    - All current tasks here
 
@@ -117,6 +125,7 @@ When testing, you may deploy multiple contracts:
 ### Solution: Always Use Latest Contract
 
 Keep `.env` files updated with:
+
 - **Latest deployed contract address**
 - **Latest deployed cUSD token address**
 - Both frontend and backend must match!
@@ -126,12 +135,14 @@ Keep `.env` files updated with:
 ## What Each Environment Variable Does
 
 ### Server `.env`
+
 ```
 CONTRACT_ADDRESS=0xa520d207c91C0FE0e9cFe8D63AbE02fd18B2254e
 ↑ Used to create tasks, approve payments, interact with blockchain
 ```
 
 ### Client `.env.local`
+
 ```
 NEXT_PUBLIC_CONTRACT_ADDRESS=0xa520d207c91C0FE0e9cFe8D63AbE02fd18B2254e
 ↑ Used by frontend (public = visible in browser code)
@@ -144,20 +155,23 @@ NEXT_PUBLIC_CONTRACT_ADDRESS=0xa520d207c91C0FE0e9cFe8D63AbE02fd18B2254e
 ## How to Avoid This in Future
 
 ### For Deployments
+
 1. Deploy new contract
 2. Update **BOTH** `.env` files
 3. Restart **BOTH** server and client
 4. Test with new task
 
 ### Checklist
+
 - [ ] Server `.env` updated
-- [ ] Client `.env.local` updated  
+- [ ] Client `.env.local` updated
 - [ ] Server restarted
 - [ ] Client restarted
 - [ ] New task created (not old one)
 - [ ] Test end-to-end
 
 ### Monitor Logs
+
 ```bash
 # Server should show
 Connected to: 0xa520d207c91C0FE0e9cFe8D63AbE02fd18B2254e
@@ -173,12 +187,14 @@ Connected to: 0xa520d207c91C0FE0e9cFe8D63AbE02fd18B2254e
 If you want to use that project too:
 
 1. **Diagnose it**:
+
    ```bash
    cd D:\new-celo\server
    npx tsx show-env-info.ts
    ```
 
 2. **Fix it**:
+
    - Update `D:\new-celo\server\.env` to use correct contract
    - Update `D:\new-celo\client\.env.local` to match
    - OR create fresh tasks with its current contract
@@ -191,12 +207,12 @@ If you want to use that project too:
 
 ## Quick Reference
 
-| Item | Current (✅) | Old (❌) | Other (⚠️) |
-|------|------------|---------|-----------|
-| **Location** | `C:\Users\RAJ\OneDrive\Desktop\micro-job-ai-agent-web3` | Same | `D:\new-celo` |
-| **Contract** | `0xa520d207c91C0FE0e9cFe8D63AbE02fd18B2254e` | `0xA0e793E7257c065b30c46Ef6828F2B3C0de87A8E` | `0x1744505ae24f747C0D92343206E658c09EF69CDC` |
-| **cUSD** | `0x845D9D0B4Be004Dcbc17b11160B0C18abBD5FEBD` | `0x874069fa1eb16d44d622f2e0ca25eea172369bc1` | Unknown |
-| **Status** | Working ✅ | Deprecated ❌ | External ⚠️ |
+| Item         | Current (✅)                                            | Old (❌)                                     | Other (⚠️)                                   |
+| ------------ | ------------------------------------------------------- | -------------------------------------------- | -------------------------------------------- |
+| **Location** | `C:\Users\RAJ\OneDrive\Desktop\micro-job-ai-agent-web3` | Same                                         | `D:\new-celo`                                |
+| **Contract** | `0xa520d207c91C0FE0e9cFe8D63AbE02fd18B2254e`            | `0xA0e793E7257c065b30c46Ef6828F2B3C0de87A8E` | `0x1744505ae24f747C0D92343206E658c09EF69CDC` |
+| **cUSD**     | `0x845D9D0B4Be004Dcbc17b11160B0C18abBD5FEBD`            | `0x874069fa1eb16d44d622f2e0ca25eea172369bc1` | Unknown                                      |
+| **Status**   | Working ✅                                              | Deprecated ❌                                | External ⚠️                                  |
 
 ---
 
@@ -205,15 +221,16 @@ If you want to use that project too:
 ✅ **Your current workspace is now fixed and ready!**
 
 The issue was:
+
 - Client and server had **mismatched contract addresses**
 - Different instances were running in parallel
 - Frontend was sending data to wrong contract
 
 The fix:
+
 - ✅ Updated client `.env.local` to match server
 - ✅ Added error handling for mismatches
 - ✅ Improved error messages
 - ✅ All verified working
 
 **You're good to go!** 🚀
-
