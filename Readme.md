@@ -233,7 +233,7 @@ npx hardhat verify --network celo-sepolia 0xYourContractAddress "0x874069fa1eb16
 
 ## 🧠 Wireframe
 
-<img src="assets/wireframe.png" alt="Credio Wireframe" width="800" />
+<img src="assets/wireframe.jpg" alt="Credio Wireframe" width="800" />
 
 ## 💰 Tasks
 
